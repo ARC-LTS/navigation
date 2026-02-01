@@ -48,7 +48,7 @@ from launch_ros.actions import PushRosNamespace, SetRemap
 
 
 ARGUMENTS = [
-    DeclareLaunchArgument('use_sim_time', default_value='false',
+    DeclareLaunchArgument('use_sim_time', default_value='true',
                           choices=['true', 'false'],
                           description='Use sim time'),
     DeclareLaunchArgument('setup_path',
