@@ -29,72 +29,72 @@ def generate_launch_description():
 
         # Launch arguments
         DeclareLaunchArgument(
-            'use_sim_time', default_value='false',
+            'use_sim_time', default_value='true',
             description='Use simulation (Gazebo) clock if true'),
 
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            arguments = ['0.1016', '0', '0.500', '0', '0', '0', 'base_link', 'laser_sensor_frame']
-        ),
+#        Node(
+#            package='tf2_ros',
+#            executable='static_transform_publisher',
+#            arguments = ['0.1016', '0', '0.500', '0', '0', '0', 'base_link', 'laser_sensor_frame']
+#        ),
 
         # Nodes to launch
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([os.path.join(
-                get_package_share_directory('velodyne_driver'), 'launch'),
-                '/velodyne_driver_node-VLP16-launch.py']),
-        ),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([os.path.join(
-                get_package_share_directory('velodyne_pointcloud'), 'launch'),
-                '/velodyne_transform_node-VLP16-launch.py']),
-        ),
+#        IncludeLaunchDescription(
+#            PythonLaunchDescriptionSource([os.path.join(
+#                get_package_share_directory('velodyne_driver'), 'launch'),
+#                '/velodyne_driver_node-VLP16-launch.py']),
+#        ),
+#        IncludeLaunchDescription(
+#            PythonLaunchDescriptionSource([os.path.join(
+#                get_package_share_directory('velodyne_pointcloud'), 'launch'),
+#                '/velodyne_transform_node-VLP16-launch.py']),
+#        ),
 
-		# Static Transform Publisher for VLP16 Lidar
-		Node(
-        	package='tf2_ros',
-       	 	executable='static_transform_publisher',
-        	name='base_to_velodyne_broadcaster',
-        	output='screen',
-        	arguments=['-0.25', '0', '0.1', '0', '0', '0', 'base_link', 'velodyne']
-    	),
+#		# Static Transform Publisher for VLP16 Lidar
+#		Node(
+#        	package='tf2_ros',
+#       	 	executable='static_transform_publisher',
+#        	name='base_to_velodyne_broadcaster',
+#        	output='screen',
+#        	arguments=['-0.25', '0', '0.1', '0', '0', '0', 'base_link', 'velodyne']
+#    	),
 
          # Nodes to launch
-        TimerAction(period=10.0,actions=[
+        TimerAction(period=5.0,actions=[
 
-        #   Node(
-        #     package='rtabmap_odom', executable='icp_odometry', output='screen',
-        #     parameters=[{
-        #       'frame_id':'base_link',
-        #       'odom_frame_id':'odom',
-        #       'publish_tf': False, 
-        #       'wait_for_transform':0.4,
-        #       'expected_update_rate':25.0,
-        #       'use_sim_time':use_sim_time,
-        #     }],
-        #     remappings=[
-        #       ('scan_cloud', '/velodyne_points'),
-        #       #('imu', '/imu'),
-        #       ('odom', '/icp/odometry'),
-        #     ],
-        #     arguments=[
-        #       'Icp/PointToPlane', 'true',
-        #       'Icp/Iterations', '10',
-        #       'Icp/VoxelSize', '0.1',
-        #       'Icp/Epsilon', '0.001',
-        #       'Icp/PointToPlaneK', '20',
-        #       'Icp/PointToPlaneRadius', '0',
-        #       'Icp/MaxTranslation', '2',
-        #       'Icp/MaxCorrespondenceDistance', '1',
-        #       'Icp/Strategy', '1',
-        #       'Icp/OutlierRatio', '0.7',
-        #       'Icp/CorrespondenceRatio', '0.01',
-        #       'Odom/ScanKeyFrameThr', '0.4',
-        #       'Odom/ResetCountdown', '1',
-        #       'OdomF2M/ScanSubtractRadius', '0.1',
-        #       'OdomF2M/ScanMaxSize', '60000',
-        #       'OdomF2M/BundleAdjustment', 'false',
-        #     ]),
+           Node(
+             package='rtabmap_odom', executable='icp_odometry', output='screen',
+             parameters=[{
+               'frame_id':'base_link',
+               'odom_frame_id':'odom',
+               'publish_tf': True, 
+               'wait_for_transform':0.4,
+               'expected_update_rate':25.0,
+               'use_sim_time':use_sim_time,
+             }],
+             remappings=[
+               ('scan_cloud', '/sensors/lidar3d_0/points'),
+               #('imu', '/imu'),
+               #('odom', '/icp/odometry'),
+             ],
+             arguments=[
+               'Icp/PointToPlane', 'true',
+               'Icp/Iterations', '10',
+               'Icp/VoxelSize', '0.1',
+               'Icp/Epsilon', '0.001',
+               'Icp/PointToPlaneK', '20',
+               'Icp/PointToPlaneRadius', '0',
+               'Icp/MaxTranslation', '2',
+               'Icp/MaxCorrespondenceDistance', '1',
+               'Icp/Strategy', '1',
+               'Icp/OutlierRatio', '0.7',
+               'Icp/CorrespondenceRatio', '0.01',
+               'Odom/ScanKeyFrameThr', '0.4',
+               'Odom/ResetCountdown', '1',
+               'OdomF2M/ScanSubtractRadius', '0.1',
+               'OdomF2M/ScanMaxSize', '60000',
+               'OdomF2M/BundleAdjustment', 'false',
+             ]),
             
         # Node(
         #    package='rtabmap_odom', executable='rgbd_odometry', output='screen',
@@ -128,7 +128,7 @@ def generate_launch_description():
               # 'map_always_update': True,
             }],
             remappings=[
-              ('scan_cloud','/velodyne_points'),
+              ('scan_cloud','/sensors/lidar3d_0/points'),
             #  ('rgb/image', '/camera/color/image_raw'),
             #  ('rgb/camera_info', '/camera/color/camera_info'),
             #  ('depth/image', '/camera/aligned_depth_to_color/image_raw'),
@@ -157,8 +157,8 @@ def generate_launch_description():
               'Icp/OutlierRatio', '0.7',
               'Icp/CorrespondenceRatio', '0.2',
               'Grid/GroundIsObstacle', 'false',
-              'Grid/MaxGroundHeight', '-0.2',
-              'Grid/MinObstacleHeight', '-0.2',
+              'Grid/MaxGroundHeight', '0.1',
+              'Grid/MinObstacleHeight', '0.0',
               'Grid/NormalsSegmentation', 'true',
               'Grid/MaxObstacleHeight', '10',
               'Grid/RangeMax', '6.0',
