@@ -69,7 +69,7 @@ def generate_launch_description():
                'odom_frame_id':'odom',
                'publish_tf': True, 
                'wait_for_transform':0.4,
-               'expected_update_rate':25.0,
+               'expected_update_rate':30.0,
                'use_sim_time':use_sim_time,
              }],
              remappings=[
