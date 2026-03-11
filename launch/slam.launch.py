@@ -157,11 +157,11 @@ def generate_launch_description():
               'Icp/OutlierRatio', '0.7',
               'Icp/CorrespondenceRatio', '0.2',
               'Grid/GroundIsObstacle', 'false',
-              'Grid/MaxGroundHeight', '0.1',
+              'Grid/MaxGroundHeight', '0.2',
               'Grid/MinObstacleHeight', '0.0',
               'Grid/NormalsSegmentation', 'true',
               'Grid/MaxObstacleHeight', '10',
-              'Grid/RangeMax', '6.0',
+              'Grid/RangeMax', '30.0',
               'Grid/RayTracing', 'true'
               
             ]),
