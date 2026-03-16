@@ -201,7 +201,7 @@ global_costmap:
         plugin: "rad_costmap_plugin::RadiationLayer"
         heatmap_topic: "/rad_heatmap/gp_mean_map"
         background_threshold_mrem_hr: 0.25
-        critical_dose_mrem_hr: 2.0
+        critical_dose_mrem_hr: 10.0 # Increased from 2.0 to allow navigation into higher rad zones
       denoise_layer:
         plugin: "nav2_costmap_2d::DenoiseLayer"
         enabled: True
