@@ -152,8 +152,8 @@ local_costmap:
       radiation_layer:
         plugin: "rad_costmap_plugin::RadiationLayer"
         heatmap_topic: "/rad_heatmap/gp_mean_map"
-        warning_threshold_mrem_hr: 2.0
-        evacuation_threshold_mrem_hr: 50.0
+        warning_threshold_mrem_hr: 0.5
+        evacuation_threshold_mrem_hr: 5.0
       denoise_layer:
         plugin: "nav2_costmap_2d::DenoiseLayer"
         enabled: True
@@ -201,8 +201,8 @@ global_costmap:
       radiation_layer:
         plugin: "rad_costmap_plugin::RadiationLayer"
         heatmap_topic: "/rad_heatmap/gp_mean_map"
-        warning_threshold_mrem_hr: 2.0
-        evacuation_threshold_mrem_hr: 50.0
+        warning_threshold_mrem_hr: 0.5
+        evacuation_threshold_mrem_hr: 5.0
       denoise_layer:
         plugin: "nav2_costmap_2d::DenoiseLayer"
         enabled: True

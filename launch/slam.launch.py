@@ -24,6 +24,7 @@ def rename_rtabmap_db():
 def generate_launch_description():
     rename_rtabmap_db()
     use_sim_time = LaunchConfiguration('use_sim_time')
+    output = LaunchConfiguration('output')
     
     return LaunchDescription([
 
@@ -31,6 +32,10 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'use_sim_time', default_value='true',
             description='Use simulation (Gazebo) clock if true'),
+
+        DeclareLaunchArgument(
+            'output', default_value='log',
+            description='Output destination for nodes (screen or log)'),
 
 #        Node(
 #            package='tf2_ros',
@@ -55,7 +60,7 @@ def generate_launch_description():
 #        	package='tf2_ros',
 #       	 	executable='static_transform_publisher',
 #        	name='base_to_velodyne_broadcaster',
-#        	output='screen',
+#        	output=output,
 #        	arguments=['-0.25', '0', '0.1', '0', '0', '0', 'base_link', 'velodyne']
 #    	),
 
@@ -63,7 +68,7 @@ def generate_launch_description():
         TimerAction(period=5.0,actions=[
 
            Node(
-             package='rtabmap_odom', executable='icp_odometry', output='screen',
+             package='rtabmap_odom', executable='icp_odometry', output=output,
              parameters=[{
                'frame_id':'base_link',
                'odom_frame_id':'odom',
@@ -94,10 +99,11 @@ def generate_launch_description():
                'OdomF2M/ScanSubtractRadius', '0.1',
                'OdomF2M/ScanMaxSize', '60000',
                'OdomF2M/BundleAdjustment', 'false',
+               '--ros-args', '--log-level', 'error'
              ]),
             
         # Node(
-        #    package='rtabmap_odom', executable='rgbd_odometry', output='screen',
+        #    package='rtabmap_odom', executable='rgbd_odometry', output=output,
         #    parameters=[{
         #     'frame_id':'base_link',
         #     'subscribe_depth':True,
@@ -111,7 +117,7 @@ def generate_launch_description():
         #   ]),
           
         Node(
-            package='rtabmap_slam', executable='rtabmap', output='screen',
+            package='rtabmap_slam', executable='rtabmap', output=output,
             parameters=[{
               'frame_id':'base_link',
               'odom_frame_id':'odom',
@@ -163,7 +169,7 @@ def generate_launch_description():
               'Grid/MaxObstacleHeight', '10',
               'Grid/RangeMax', '30.0',
               'Grid/RayTracing', 'true'
-              
+              '--ros-args', '--log-level', 'error'
             ]),
         ]),
     ])
