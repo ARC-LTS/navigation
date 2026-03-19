@@ -168,7 +168,7 @@ def generate_launch_description():
               'Grid/NormalsSegmentation', 'true',
               'Grid/MaxObstacleHeight', '10',
               'Grid/RangeMax', '30.0',
-              'Grid/RayTracing', 'true'
+              'Grid/RayTracing', 'true',
               '--ros-args', '--log-level', 'error'
             ]),
         ]),
