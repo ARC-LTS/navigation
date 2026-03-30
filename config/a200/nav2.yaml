@@ -100,7 +100,7 @@ controller_server:
       decel_lim_y: 0.0
       decel_lim_theta: -3.2
       vx_samples: 20
-      vy_samples: 5
+      vy_samples: 1  # robot is non-holonomic; no lateral motion to sample
       vtheta_samples: 20
       sim_time: 1.7
       linear_granularity: 0.05
@@ -139,6 +139,10 @@ local_costmap:
       height: 8
       resolution: 0.05
       footprint: "[ [0.55, 0.45], [0.55, -0.45], [-0.55, -0.45], [-0.55, 0.45] ]"
+      # radiation_layer is intentionally absent from the local costmap.
+      # Having it here caused DWB to treat diffuse radiation fields as physical
+      # obstacles, leaving no valid trajectories and freezing the robot.
+      # Radiation cost is handled at the global planning level only.
       plugins: ["obstacle_layer", "inflation_layer", "denoise_layer"]
       denoise_layer:
         plugin: "nav2_costmap_2d::DenoiseLayer"
@@ -184,7 +188,7 @@ global_costmap:
     ros__parameters:
       rolling_window: false
       update_frequency: 1.0
-      publish_frequency: 0.5
+      publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
       use_sim_time: True
@@ -195,10 +199,12 @@ global_costmap:
       radiation_layer:
         plugin: "rad_costmap_plugin::RadiationLayer"
         heatmap_topic: "/rad_heatmap/gp_mean_map"
-        warning_threshold_mrem_hr: 1.0
-        evacuation_threshold_mrem_hr: 5.0
-        max_radiation_cost: 100
-        track_unknown_space: true
+        # warning_threshold raised above background radiation max (~1.0 mrem/hr)
+        # to avoid inflating costs on every cell due to normal background noise.
+        warning_threshold_mrem_hr: 1.5
+        # evacuation_threshold aligned with rad_safety's emergency threshold (8.0)
+        # so the costmap and the safety system agree on what is truly dangerous.
+        evacuation_threshold_mrem_hr: 8.0
       denoise_layer:
         plugin: "nav2_costmap_2d::DenoiseLayer"
         enabled: True
@@ -216,7 +222,7 @@ global_costmap:
           raytrace_max_range: 8.0
           raytrace_min_range: 0.0
           obstacle_max_range: 8.0
-          obstacle_min_range: 0.0        
+          obstacle_min_range: 0.0
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
@@ -248,7 +254,7 @@ map_saver:
 
 planner_server:
   ros__parameters:
-    expected_planner_frequency: 20.0
+    expected_planner_frequency: 5.0  # aligned with global costmap update rate (1.0 Hz); 20 Hz was replanning on stale data
     use_sim_time: True
     planner_plugins: ["GridBased"]
     GridBased:
@@ -312,7 +318,7 @@ recoveries_server:
       plugin: "nav2_recoveries/Wait"
     frontier_explore: true
     mission_time: ""
-    global_frame: vision
+    global_frame: map
     robot_base_frame: base_link
     transform_timeout: 0.1
     use_sim_time: true
