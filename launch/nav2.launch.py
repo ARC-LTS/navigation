@@ -48,11 +48,11 @@ from launch_ros.actions import PushRosNamespace, SetRemap
 
 
 ARGUMENTS = [
-    DeclareLaunchArgument('use_sim_time', default_value='false',
+    DeclareLaunchArgument('use_sim_time', default_value='true',
                           choices=['true', 'false'],
                           description='Use sim time'),
     DeclareLaunchArgument('setup_path',
-                          default_value='/etc/clearpath/',
+                          default_value='/var/home/doobs/Dev/ARC/clearpath/',
                           description='Clearpath setup path')
 ]
 
@@ -84,19 +84,19 @@ def launch_setup(context, *args, **kwargs):
       [pkg_nav2_bringup, 'launch', 'navigation_launch.py'])
 
     nav2 = GroupAction([
-        PushRosNamespace(namespace),
-        SetRemap('/' + namespace + '/global_costmap/sensors/lidar2d_0/scan',
-                 '/' + namespace + '/sensors/lidar2d_0/scan'),
-        SetRemap('/' + namespace + '/local_costmap/sensors/lidar2d_0/scan',
-                 '/' + namespace + '/sensors/lidar2d_0/scan'),
+        # PushRosNamespace(namespace),
+        # SetRemap('/' + namespace + '/global_costmap/sensors/lidar3d_0/points',
+        #          '/' + namespace + '/sensors/lidar3d_0/points'),
+        # SetRemap('/' + namespace + '/local_costmap/sensors/lidar3d_0/points',
+        #          '/' + namespace + '/sensors/lidar3d_0/points'),
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(launch_nav2),
             launch_arguments=[
                 ('use_sim_time', use_sim_time),
                 ('params_file', file_parameters),
-                ('use_composition', 'False'),
-                ('namespace', namespace)
+            #    ('use_composition', 'False'),
+                #('namespace', namespace)
               ]
         ),
     ])
