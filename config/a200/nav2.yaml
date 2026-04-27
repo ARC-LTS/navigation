@@ -9,6 +9,7 @@ bt_navigator:
     enable_groot_monitoring: True
     groot_zmq_publisher_port: 1666
     groot_zmq_server_port: 1667
+    #default_nav_to_pose_bt_xml: "/home/brendoncintas/radmon_ws/install/clearpath_nav2_demos/share/clearpath_nav2_demos/config/a200/navigate_to_pose_custom.xml"
     plugin_lib_names:
     - nav2_compute_path_to_pose_action_bt_node
     - nav2_compute_path_through_poses_action_bt_node
@@ -67,7 +68,7 @@ controller_server:
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
       required_movement_radius: 0.1
-      movement_time_allowance: 20.0
+      movement_time_allowance: 12.0
     # Goal checker parameters
     #precise_goal_checker:
     #  plugin: "nav2_controller::SimpleGoalChecker"
@@ -77,8 +78,8 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.7
-      yaw_goal_tolerance: 0.5 #0.25
+      xy_goal_tolerance: 0.35
+      yaw_goal_tolerance: 0.5
     # DWB parameters
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
@@ -106,15 +107,16 @@ controller_server:
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 0.2
-      xy_goal_tolerance: 0.7
+      xy_goal_tolerance: 0.35
       trans_stopped_velocity: 0.1
       short_circuit_trajectory_evaluation: True
       stateful: True
-      critics: ["RotateToGoal", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
-      BaseObstacle.scale: 20.0
-      PathAlign.scale: 20.0
+      critics: ["RotateToGoal", "BaseObstacle", "ObstacleFootprint", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
+      BaseObstacle.scale: 500.0
+      ObstacleFootprint.scale: 500.0
+      PathAlign.scale: 50.0
       PathAlign.forward_point_distance: 0.1
-      GoalAlign.scale: 20.0
+      GoalAlign.scale: 12.0
       GoalAlign.forward_point_distance: 0.1
       PathDist.scale: 32.0
       GoalDist.scale: 24.0
@@ -143,13 +145,17 @@ local_costmap:
       # Having it here caused DWB to treat diffuse radiation fields as physical
       # obstacles, leaving no valid trajectories and freezing the robot.
       # Radiation cost is handled at the global planning level only.
-      plugins: ["obstacle_layer", "inflation_layer", "denoise_layer"]
+      plugins: ["static_layer", "obstacle_layer", "inflation_layer", "denoise_layer"]
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: True
+        subscribe_to_updates: True
       denoise_layer:
         plugin: "nav2_costmap_2d::DenoiseLayer"
         enabled: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 8.0
+        cost_scaling_factor: 5.0
         inflation_radius: 0.75
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
@@ -172,9 +178,6 @@ local_costmap:
           raytrace_min_range: 0.0
           obstacle_max_range: 8.0
           obstacle_min_range: 0.20
-
-      static_layer:
-        map_subscribe_transient_local: True
       always_send_full_costmap: True
   local_costmap_client:
     ros__parameters:
@@ -193,6 +196,7 @@ global_costmap:
       robot_base_frame: base_link
       use_sim_time: True
       footprint: "[ [0.55, 0.45], [0.55, -0.45], [-0.55, -0.45], [-0.55, 0.45] ]"
+      footprint_padding: 0.1
       resolution: 0.05
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer", "radiation_layer", "denoise_layer"]
@@ -229,8 +233,8 @@ global_costmap:
         subscribe_to_updates: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 8.0
-        inflation_radius: 0.75
+        cost_scaling_factor: 5.0
+        inflation_radius: 1.0
       always_send_full_costmap: True
   global_costmap_client:
     ros__parameters:
@@ -254,14 +258,19 @@ map_saver:
 
 planner_server:
   ros__parameters:
-    expected_planner_frequency: 5.0  # aligned with global costmap update rate (1.0 Hz); 20 Hz was replanning on stale data
+    expected_planner_frequency: 1.0
     use_sim_time: True
     planner_plugins: ["GridBased"]
     GridBased:
-      plugin: "nav2_navfn_planner/NavfnPlanner"
+      plugin: "nav2_smac_planner/SmacPlanner2D"
       tolerance: 0.5
-      use_astar: true
       allow_unknown: true
+      downsample_costmap: false
+      max_iterations: 1000000
+      max_on_approach_iterations: 1000
+      max_planning_time: 5.0
+      cost_penalty: 50.0
+      retrospective_penalty: 0.015
 
 #planner_server:
 #  ros__parameters:
@@ -322,9 +331,9 @@ recoveries_server:
     robot_base_frame: base_link
     transform_timeout: 0.1
     use_sim_time: true
-    simulate_ahead_time: 2.0
+    simulate_ahead_time: 0.5
     max_rotational_vel: 1.0
-    min_rotational_vel: 0.4
+    min_rotational_vel: 0.2
     rotational_acc_lim: 3.2
 
 robot_state_publisher:
@@ -340,4 +349,3 @@ waypoint_follower:
       plugin: "nav2_waypoint_follower::WaitAtWaypoint"
       enabled: True
       waypoint_pause_duration: 200
-

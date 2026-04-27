@@ -72,9 +72,9 @@ def generate_launch_description():
              parameters=[{
                'frame_id':'base_link',
                'odom_frame_id':'odom',
-               'publish_tf': True, 
+               'publish_tf': True,
                'wait_for_transform':0.4,
-               'expected_update_rate':30.0,
+               'expected_update_rate':10.0,   # VLP16 default rotation rate
                'use_sim_time':use_sim_time,
              }],
              remappings=[
@@ -85,19 +85,19 @@ def generate_launch_description():
              arguments=[
                'Icp/PointToPlane', 'true',
                'Icp/Iterations', '10',
-               'Icp/VoxelSize', '0.1',
+               'Icp/VoxelSize', '0.15',        # VLP16 ring density normalisation
                'Icp/Epsilon', '0.001',
                'Icp/PointToPlaneK', '20',
                'Icp/PointToPlaneRadius', '0',
                'Icp/MaxTranslation', '2',
-               'Icp/MaxCorrespondenceDistance', '1',
+               'Icp/MaxCorrespondenceDistance', '0.5',  # tight enough to reject cross-aisle false matches
                'Icp/Strategy', '1',
-               'Icp/OutlierRatio', '0.7',
+               'Icp/OutlierRatio', '0.65',
                'Icp/CorrespondenceRatio', '0.01',
                'Odom/ScanKeyFrameThr', '0.4',
                'Odom/ResetCountdown', '1',
-               'OdomF2M/ScanSubtractRadius', '0.1',
-               'OdomF2M/ScanMaxSize', '60000',
+               'OdomF2M/ScanSubtractRadius', '0.15',   # match voxel size
+               'OdomF2M/ScanMaxSize', '100000',         # ~3 full VLP16 scans of reference map
                'OdomF2M/BundleAdjustment', 'false',
                '--ros-args', '--log-level', 'error'
              ]),
@@ -148,27 +148,28 @@ def generate_launch_description():
               'RGBD/LinearUpdate', '0.05',
               'RGBD/CreateOccupancyGrid', 'false',
               'Mem/NotLinkedNodesKept', 'true',
-              'Mem/STMSize', '30',
+              'Mem/STMSize', '50',              # more recent nodes available for loop closure
               'Mem/LaserScanNormalK', '20',
               'Reg/Strategy', '1',
-              'Icp/VoxelSize', '0.1',
+              'Icp/VoxelSize', '0.15',          # match odometry voxel size
               'Icp/PointToPlaneK', '20',
               'Icp/PointToPlaneRadius', '0',
               'Icp/PointToPlane', 'true',
               'Icp/Iterations', '10',
               'Icp/Epsilon', '0.001',
               'Icp/MaxTranslation', '3',
-              'Icp/MaxCorrespondenceDistance', '1',
+              'Icp/MaxCorrespondenceDistance', '0.5',  # tight matching reduces misaligned scan merges
               'Icp/Strategy', '1',
-              'Icp/OutlierRatio', '0.7',
-              'Icp/CorrespondenceRatio', '0.2',
+              'Icp/OutlierRatio', '0.65',
+              'Icp/CorrespondenceRatio', '0.3',  # require more valid correspondences before accepting scan
               'Grid/GroundIsObstacle', 'false',
-              'Grid/MaxGroundHeight', '0.2',
-              'Grid/MinObstacleHeight', '0.0',
+              'Grid/MaxGroundHeight', '0.15',
+              'Grid/MinObstacleHeight', '0.1',   # reject near-ground noise from clearing cells
               'Grid/NormalsSegmentation', 'true',
-              'Grid/MaxObstacleHeight', '10',
-              'Grid/RangeMax', '10.0',
+              'Grid/MaxObstacleHeight', '2.0',   # VLP16 +15° ceiling returns excluded; preserves shelf cells
+              'Grid/RangeMax', '8.0',            # shorter ray-traces = less sweeping through mapped obstacles
               'Grid/RayTracing', 'true',
+              'Grid/ProbMiss', '0.45',           # weaker clearing vote per ray; occupied cells survive longer
               '--ros-args', '--log-level', 'error'
             ]),
         ]),
