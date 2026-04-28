@@ -48,11 +48,11 @@ from launch_ros.actions import PushRosNamespace, SetRemap
 
 
 ARGUMENTS = [
-    DeclareLaunchArgument('use_sim_time', default_value='true',
+    DeclareLaunchArgument('use_sim_time', default_value='false',
                           choices=['true', 'false'],
                           description='Use sim time'),
     DeclareLaunchArgument('setup_path',
-                          default_value='/var/home/doobs/Dev/ARC/clearpath/',
+                          default_value='/etc/clearpath/',
                           description='Clearpath setup path')
 ]
 
