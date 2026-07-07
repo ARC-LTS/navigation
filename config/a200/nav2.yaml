@@ -112,8 +112,15 @@ controller_server:
       short_circuit_trajectory_evaluation: True
       stateful: True
       critics: ["RotateToGoal", "BaseObstacle", "ObstacleFootprint", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
-      BaseObstacle.scale: 500.0
-      ObstacleFootprint.scale: 500.0
+      # Was 500.0 each: 10-40x the weight of every path/goal-progress critic
+      # combined (PathAlign 50, PathDist 32, GoalDist 24, GoalAlign 12), which
+      # made DWB reject/heavily penalize any trajectory brushing the inflation
+      # gradient near a wall -- causing the robot to refuse tight-but-passable
+      # aisles it had physical room to traverse. Bench-tested at 25.0 (same
+      # order of magnitude as the path-following critics) with no regression
+      # in obstacle avoidance observed.
+      BaseObstacle.scale: 25.0
+      ObstacleFootprint.scale: 25.0
       PathAlign.scale: 50.0
       PathAlign.forward_point_distance: 0.1
       GoalAlign.scale: 12.0
