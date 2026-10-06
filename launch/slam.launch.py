@@ -73,7 +73,7 @@ def generate_launch_description():
                'frame_id':'base_link',
                'odom_frame_id':'odom',
                'publish_tf': True,
-               'wait_for_transform':0.4,
+               'wait_for_transform':2.0,  # wall-clock wait for sim-time TF; 0.4 starves under low RTF and stalls scan conversion
                'expected_update_rate':10.0,   # VLP16 default rotation rate
                'use_sim_time':use_sim_time,
              }],
@@ -127,7 +127,7 @@ def generate_launch_description():
               'subscribe_scan_cloud':True,
               'subscribe_odom_info':False,
               'approx_sync': True,
-              'wait_for_transform':0.4,
+              'wait_for_transform':2.0,  # wall-clock wait for sim-time TF; 0.4 starves under low RTF and stalls scan conversion
               'use_sim_time': use_sim_time,
               'publish_tf': True,  # Disable publishing TF
               'queue_size': 30,
