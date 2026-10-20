@@ -107,7 +107,7 @@ The **~0.4 m local / 0.5 m global inflation radius** is a RaMonES tuning ("navA"
 adoption): the previous values (0.75 local / 1.0 global) kept 1.25 m corridors fully
 inside the inflated band; dropping to 0.4/0.5 broke the coverage ceiling with ~5× fewer
 stuck triggers. The pre-navA file is preserved in git history as
-`config/a200/nav2.yaml.pre_navA_backup` on the `handoff` branch.
+`config/a200/nav2.yaml.pre_navA_backup` at the `dissertation-2026` tag.
 
 ### Controller — `controller_server`
 
