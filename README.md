@@ -16,14 +16,14 @@ into navigation cost at the planning level.
 `package.xml` name: **`clearpath_nav2_demos`**. It is a pure
 config/launch/maps package (`ament_cmake`, `CMakeLists.txt` only installs
 `config/`, `launch/`, `maps/` to `share/`; no compiled nodes). Runtime dependencies:
-`clearpath_config`, `nav2_bringup`, `slam_toolbox`.
+`clearpath_config`, `nav2_bringup`, `rtabmap_odom`, `rtabmap_slam`, `tf2_ros`.
 
 ---
 
 ## 1. Layout
 
 ```
-config/<platform>/{nav2,slam,localization}.yaml   # per Clearpath platform
+config/<platform>/{nav2,localization}.yaml        # per Clearpath platform
 launch/{nav2,slam,localization,rtabmap}.launch.py
 maps/warehouse.{pgm,yaml}
 ```
@@ -32,8 +32,6 @@ Per-platform config directories exist for the Clearpath line:
 `a200` (Husky), `dd100/dd150` (Dingo-D), `do100/do150` (Dingo-O),
 `j100` (Jackal), `r100` (Ridgeback-like), `w200` (Warthog).
 **RaMonES runs on the Husky A200, so `config/a200/` is the active configuration.**
-`config/a200/nav2.yaml.pre_navA_backup` is a saved copy of the pre-"navA" inflation
-tuning (see §3) and is **not** loaded at runtime.
 
 The launch files select the platform directory **dynamically**: `nav2.launch.py` and
 `localization.launch.py` read the Clearpath `robot.yaml` (via `clearpath_config`) to
@@ -48,22 +46,28 @@ the model declared in `robot.yaml`.
 
 | File | What it starts | Key args (defaults) |
 |---|---|---|
-| `nav2.launch.py` | Includes `nav2_bringup/navigation_launch.py` with `config/<model>/nav2.yaml` (planner, controller, costmaps, BT navigator, recoveries, waypoint follower) | `use_sim_time=true`; `setup_path=/var/home/doobs/Dev/ARC/clearpath/` (path to `robot.yaml`) |
-| `slam.launch.py` | **Custom RTAB-Map 3D-LiDAR SLAM**: `rtabmap_odom/icp_odometry` + `rtabmap_slam/rtabmap` on `/sensors/lidar3d_0/points`, started after a 5 s `TimerAction`. Renames any existing `~/.ros/rtabmap.db` on launch | `use_sim_time=true`; `output=log` |
+| `nav2.launch.py` | Includes `nav2_bringup/navigation_launch.py` with `config/<model>/nav2.yaml` (planner, controller, costmaps, BT navigator, recoveries, waypoint follower) | `use_sim_time=true`; `setup_path=$RAMONES_SETUP_PATH` or `~/clearpath/` (directory holding `robot.yaml`) |
+| `slam.launch.py` | **Custom RTAB-Map 3D-LiDAR SLAM**: `rtabmap_odom/icp_odometry` + `rtabmap_slam/rtabmap` on `/sensors/lidar3d_0/points`, started after a 5 s `TimerAction`. Renames an existing `/root/.ros/rtabmap.db` on launch (a no-op unless running as root; RTAB-Map's `-d` flag discards the previous database regardless) | `use_sim_time=true`; `output=log` |
 | `rtabmap.launch.py` | Earlier/alternate RTAB-Map config (looser ICP tolerances, `expected_update_rate=60`, publishes a VLP16 `base_link→velodyne` static TF, `odom` remapped to `/icp/odom`) | `use_sim_time=true`; `deskewing=true` |
-| `localization.launch.py` | Includes `nav2_bringup/localization_launch.py` with `config/<model>/localization.yaml` (AMCL + map_server) against a prebuilt map | `use_sim_time=false`; `setup_path=/etc/clearpath/`; `map=maps/warehouse.yaml` |
+| `localization.launch.py` | Includes `nav2_bringup/localization_launch.py` with `config/<model>/localization.yaml` (AMCL + map_server) against a prebuilt map | `use_sim_time=false`; `setup_path=$RAMONES_SETUP_PATH` or `~/clearpath/`; `map=maps/warehouse.yaml` |
 
-> **Note on SLAM:** the custom `slam.launch.py` runs **RTAB-Map on the 3D LiDAR**, not
-> `slam_toolbox`. The `config/<model>/slam.yaml` files are `slam_toolbox` parameter sets
-> inherited from upstream Clearpath and are **not referenced** by `slam.launch.py` (they
-> would only be used if `slam_toolbox` were launched directly). The RTAB-Map parameters
-> live inline in the launch files, not in YAML. `slam.launch.py` and `rtabmap.launch.py`
+> **Note on SLAM:** the custom `slam.launch.py` runs **RTAB-Map on the 3D LiDAR**
+> (`/sensors/lidar3d_0/points`), not `slam_toolbox`. The upstream `slam_toolbox`
+> `config/<model>/slam.yaml` files were never referenced by any launch file and have been
+> removed. The RTAB-Map parameters live inline in the launch files, not in YAML.
+> `icp_odometry` is the **sole** publisher of `odom → base_link`: the Clearpath setup
+> directory must have `enable_ekf: false` in its generated `platform-service.launch.py`
+> (the frozen campaign config does). A second publisher such as the platform EKF fusing
+> skid-steer wheel odometry corrupts the map whenever the robot rotates in place. `slam.launch.py` and `rtabmap.launch.py`
 > both start RTAB-Map; `slam.launch.py` is the current, more conservatively tuned one
 > (tighter ICP correspondence, `Grid/RangeMax 8.0`, longer sim-time TF waits).
 
-The `setup_path` defaults are **hard-coded absolute paths** to the Clearpath setup
-directory (`nav2.launch.py` points at a developer path under `/var/home/doobs/...`);
-a new owner will need to override `setup_path:=` to wherever their `robot.yaml` lives.
+`setup_path` (the Clearpath setup directory containing `robot.yaml`) resolves, in
+order: an explicit `setup_path:=` launch argument, then the `RAMONES_SETUP_PATH`
+environment variable, then `~/clearpath/`. For RaMonES runs, point
+`RAMONES_SETUP_PATH` at the frozen campaign config that the `ramones_ws` meta-repo
+provides, so that Nav2, the simulator and the robot description all read the same
+`robot.yaml`.
 
 ---
 
@@ -100,9 +104,10 @@ range 8 m).
     threshold so costmap and safety system agree on "dangerous")
 
 The **~0.4 m local / 0.5 m global inflation radius** is a RaMonES tuning ("navA"
-adoption): the previous values (0.75 local / 1.0 global, preserved in
-`nav2.yaml.pre_navA_backup`) kept 1.25 m corridors fully inside the inflated band;
-dropping to 0.4/0.5 broke the coverage ceiling with ~5× fewer stuck triggers.
+adoption): the previous values (0.75 local / 1.0 global) kept 1.25 m corridors fully
+inside the inflated band; dropping to 0.4/0.5 broke the coverage ceiling with ~5× fewer
+stuck triggers. The pre-navA file is preserved in git history as
+`config/a200/nav2.yaml.pre_navA_backup` on the `handoff` branch.
 
 ### Controller — `controller_server`
 
@@ -141,9 +146,7 @@ dropping to 0.4/0.5 broke the coverage ceiling with ~5× fewer stuck triggers.
 
 ## 4. SLAM / localization config (a200)
 
-* `config/a200/slam.yaml` — a `slam_toolbox` mapping config (Ceres solver,
-  `scan_topic sensors/lidar2d_0/scan`, `resolution 0.05`, loop closure on). **Inherited
-  from upstream; not wired to the custom RTAB-Map `slam.launch.py`.**
+* SLAM is RTAB-Map, configured inline in `launch/slam.launch.py` (see §2).
 * `config/a200/localization.yaml` — AMCL (`DifferentialMotionModel`, 500–2000 particles,
   `scan_topic sensors/lidar2d_0/scan`, `laser_max_range 100`) + `map_server`/`map_saver`,
   used by `localization.launch.py` against a prebuilt map.
