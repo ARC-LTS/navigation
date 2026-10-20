@@ -25,6 +25,8 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+import os
+
 from ament_index_python.packages import get_package_share_directory
 
 from clearpath_config.common.utils.yaml import read_yaml
@@ -40,6 +42,7 @@ from launch.actions import (
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 from launch.substitutions import (
+    EnvironmentVariable,
     LaunchConfiguration,
     PathJoinSubstitution
 )
@@ -52,8 +55,11 @@ ARGUMENTS = [
                           choices=['true', 'false'],
                           description='Use sim time'),
     DeclareLaunchArgument('setup_path',
-                          default_value='/etc/clearpath/',
-                          description='Clearpath setup path')
+                          default_value=EnvironmentVariable(
+                              'RAMONES_SETUP_PATH',
+                              default_value=os.path.expanduser('~/clearpath/')),
+                          description='Clearpath setup path (default: $RAMONES_SETUP_PATH, '
+                                      'else ~/clearpath/)')
 ]
 
 
@@ -68,7 +74,7 @@ def launch_setup(context, *args, **kwargs):
     map = LaunchConfiguration('map')
 
     # Read robot YAML
-    config = read_yaml(setup_path.perform(context) + 'robot.yaml')
+    config = read_yaml(os.path.join(setup_path.perform(context), 'robot.yaml'))
     # Parse robot YAML into config
     clearpath_config = ClearpathConfig(config)
 
